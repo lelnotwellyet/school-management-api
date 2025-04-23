@@ -3,16 +3,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const { check, validationResult } = require('express-validator');
-const cors = require('cors'); 
+const cors = require('cors');
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-
-app.use(cors()); 
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
 
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
@@ -24,7 +22,6 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-
 pool.getConnection((err, connection) => {
     if (err) {
         console.error('Database connection failed:', err);
@@ -34,9 +31,8 @@ pool.getConnection((err, connection) => {
     }
 });
 
-
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; 
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -44,15 +40,18 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c; 
+    const d = R * c;
     return d;
 }
 
+// ADD THIS ROOT ROUTE
+app.get('/', (req, res) => {
+    res.send('API is running!');
+});
 
 app.get('/test', (req, res) => {
     res.status(200).json({ message: 'Server is working' });
 });
-
 
 app.post('/addSchool', [
     check('name').notEmpty().trim().withMessage('Name is required'),
@@ -66,7 +65,7 @@ app.post('/addSchool', [
     }
 
     const { name, address, latitude, longitude } = req.body;
-    
+
     console.log('Received school data:', { name, address, latitude, longitude });
 
     pool.getConnection((err, connection) => {
@@ -87,7 +86,6 @@ app.post('/addSchool', [
         });
     });
 });
-
 
 app.get('/listSchools', [
     check('userLatitude').isFloat().withMessage('User Latitude must be a number'),
@@ -130,10 +128,10 @@ app.get('/listSchools', [
     });
 });
 
-
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
     console.log('Available endpoints:');
+    console.log(`- GET  http://localhost:${port}/`); // Updated to root path
     console.log(`- GET  http://localhost:${port}/test`);
     console.log(`- POST http://localhost:${port}/addSchool`);
     console.log(`- GET  http://localhost:${port}/listSchools?userLatitude=XX&userLongitude=YY`);
